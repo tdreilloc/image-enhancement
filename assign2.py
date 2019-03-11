@@ -4,81 +4,103 @@ import PIL.Image
 from tkinter import *
 from tkinter import filedialog
 import tkinter.messagebox
+from functools import partial
+import numpy as np
 
 # declare image path as a global variable
-#image = ""
-
-def histoEqualizer():
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    equ = cv2.equalizeHist(gray)
-
-    equ = PIL.Image.fromarray(equ)
-
-    equ = ImageTk.PhotoImage(equ)
-
-    newImg.configure(image=equ)
-
-    newImg.image = equ
-
-    editLabel.configure(text="Histogram Equalization")
-
-def gaussianMask():
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    #kernal = cv2.getGaussianKernel()
-
-    gauss = cv2.GaussianBlur(gray, (5, 5), 0)
-
-    gauss = PIL.Image.fromarray(gauss)
-
-    gauss = ImageTk.PhotoImage(gauss)
-
-    newImg.configure(image=gauss)
-
-    newImg.image = gauss
-
-    editLabel.configure(text="Gaussian Mask")
-
-
-def medianFilter():
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    med = cv2.medianBlur(gray, 3)
-
-    med = PIL.Image.fromarray(med)
-
-    med = ImageTk.PhotoImage(med)
-
-    newImg.configure(image=med)
-
-    newImg.image = med
-
-    editLabel.configure(text="Median Filtering")
 
 
 def browseImage():
     global image
     path = filedialog.askopenfilename()
     image = cv2.imread(path)
+    print(type(image))
 
     # OpenCV represents images in BGR order; however PIL represents
     # images in RGB order, so we need to swap the channels
     orig = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     # convert the images to PIL format...
-    orig = PIL.Image.fromarray(orig)
+    origPIL = PIL.Image.fromarray(orig)
 
     # ...and then to ImageTk format
-    orig = ImageTk.PhotoImage(orig)
+    origTK = ImageTk.PhotoImage(origPIL)
 
-    orgImg.configure(image=orig)
-    orgImg.image = orig
+    orgImg.configure(image=origTK)
+    orgImg.image = origTK
 
     imgLabel.configure(text="Original")
 
+    image = orig
 
-    histogram.configure(command=histoEqualizer)
-    median.configure(command=medianFilter)
-    gaussian.configure(command=gaussianMask)
+
+    #histogram.configure(command=histoEqualizer(image))
+    #median.configure(command=medianFilter(image))
+    #gaussian.configure(command=gaussianMask(image))
+
+
+def showNewImage(img):
+    newImg.configure(image=img)
+
+    newImg.image = img
+
+
+def histoEqualizer(img):
+    global image
+    print(type(image))
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    equ = cv2.equalizeHist(gray)
+
+    equPIL = PIL.Image.fromarray(equ)
+
+    equTk = ImageTk.PhotoImage(equPIL)
+
+    editLabel.configure(text="Histogram Equalization")
+
+    showNewImage(equTk)
+
+    #Changes global image to filtered image
+    image = equ
+
+
+def gaussianMask(img):
+    global image
+    print(type(image))
+    #gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    #kernal = cv2.getGaussianKernel()
+
+    gauss = cv2.GaussianBlur(img, (5, 5), 0)
+
+    gaussPIL = PIL.Image.fromarray(gauss)
+
+    gaussTk = ImageTk.PhotoImage(gaussPIL)
+
+    editLabel.configure(text="Gaussian Mask")
+
+    showNewImage(gaussTk)
+
+    #Changes global image to filtered image
+    image = gauss
+
+
+def medianFilter(img):
+    global image
+    print(type(image))
+    #gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    med = cv2.medianBlur(img, 3)
+
+    medPIL = PIL.Image.fromarray(med)
+
+    medTk = ImageTk.PhotoImage(medPIL)
+
+    editLabel.configure(text="Median Filtering")
+
+    showNewImage(medTk)
+
+    #Changes global image to filtered image
+    image = med
+
 
 
 # opens a messgae box about the details of the program
@@ -130,27 +152,27 @@ mainFrame = Frame(root, width=700, height=700)
 mainFrame.pack()
 
 # title label
-welcomeLabel = Label(mainFrame, text="WELCOME", font="Helvetica", fg="purple")
-welcomeLabel.pack(side=TOP, pady=5)
+welcomeLabel = Label(mainFrame, text="WELCOME", font="Helvetica", fg="purple").pack(side=TOP, pady=5)
+
 imgLabel = Label(mainFrame, text="", font="Helvetica", fg="black")
 imgLabel.pack(side=LEFT)
 editLabel = Label(mainFrame, text="", font="Helvetica", fg="black")
 editLabel.pack(side=RIGHT)
 
-
+#Display original image
 orgImg = Label(mainFrame, bg='white')
 orgImg.pack(side=LEFT, expand=YES, fill=BOTH)
+
+#Display after applying filter
 newImg = Label(mainFrame, bg='white')
 newImg.pack(expand=YES, fill=BOTH)
 
-histogram = Button(toolbar, text="Histogram Equalization", command=histoEqualizer)
-histogram.pack(side=LEFT, padx=2, pady=2)
-median = Button(toolbar, text="Median Filtering", command=medianFilter)
-median.pack(side=LEFT, padx=2, pady=2)
-gaussian = Button(toolbar, text="Gaussian Mask", command=gaussianMask)
-gaussian.pack(side=LEFT, padx=2, pady=2)
+#Filter buttons
+histogram = Button(toolbar, text="Histogram Equalization", command=lambda: histoEqualizer(image)).pack(side=LEFT, padx=2, pady=2)
+median = Button(toolbar, text="Median Filtering", command=lambda: medianFilter(image)).pack(side=LEFT, padx=2, pady=2)
+gaussian = Button(toolbar, text="Gaussian Mask", command=lambda: gaussianMask(image)).pack(side=LEFT, padx=2, pady=2)
 
-status = Label(root, text="Preparing to do nothing...", bd=1, relief=SUNKEN, anchor=W)
-status.pack(side=BOTTOM, fill=X)
+#Unnecessary label?
+#Label(root, text="Preparing to do nothing...", bd=1, relief=SUNKEN, anchor=W).pack(side=BOTTOM, fill=X)
 
 root.mainloop()
