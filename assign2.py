@@ -17,7 +17,7 @@ def browseImage():
 
     # OpenCV represents images in BGR order; however PIL represents
     # images in RGB order, so we need to swap the channels
-    orig = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    orig = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # convert the images to PIL format...
     origPIL = PIL.Image.fromarray(orig)
@@ -56,11 +56,12 @@ def originalImage():
 
     #Show image
     showNewImage(imageTK)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 def histoEqualizer(img):
     global image
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    equ = cv2.equalizeHist(gray)
+    #gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    equ = cv2.equalizeHist(img)
 
     equPIL = PIL.Image.fromarray(equ)
 
@@ -72,6 +73,7 @@ def histoEqualizer(img):
 
     #Changes global image to filtered image
     image = equ
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 
 def gaussianMask(img):
@@ -90,6 +92,7 @@ def gaussianMask(img):
 
     #Changes global image to filtered image
     image = gauss
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 def medianFilter(img):
     global image
@@ -106,6 +109,7 @@ def medianFilter(img):
 
     #Changes global image to filtered image
     image = med
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 def edgeCanny(img):
     global image
@@ -122,21 +126,35 @@ def edgeCanny(img):
 
     image = edge
 
-#def edgeSobel(img):
-#    global image
-#
-#    edge = cv2.Sobel(img, 3, 3, 3)
-#
-#    edgePIL = PIL.Image.fromarray(edge)
-#
-#    edgeTK = ImageTk.PhotoImage(edgePIL)
-#
-#    editLabel.configure(text="Edges (Canny)")
-#
-#    showNewImage(edgeTK)
-#
-#    image = edge
+def edgeSobelX(img):
+    global image
 
+    edge = cv2.Sobel(img,cv2.COLOR_BGR2GRAY,1,0,ksize=5)
+#
+    edgePIL = PIL.Image.fromarray(edge)
+#
+    edgeTK = ImageTk.PhotoImage(edgePIL)
+#
+    editLabel.configure(text="Edges (Canny)")
+#
+    showNewImage(edgeTK)
+#
+    image = edge
+
+def edgeSobelY(img):
+    global image
+
+    edge = cv2.Sobel(img,cv2.COLOR_BGR2GRAY,0,1,ksize=5)
+#
+    edgePIL = PIL.Image.fromarray(edge)
+#
+    edgeTK = ImageTk.PhotoImage(edgePIL)
+#
+    editLabel.configure(text="Edges (Canny)")
+#
+    showNewImage(edgeTK)
+#
+    image = edge
 
 def showNewImage(img):
     newImg.configure(image=img)
@@ -153,7 +171,7 @@ def aboutProgram():
 
 # opens a messgae box on how to use the program
 def helpBox():
-    tkinter.messagebox.showinfo("1. Click Browse to choose image.2. Apply desired filters.3. Apply desired edge detection.4. Save image if desired.")
+    tkinter.messagebox.showinfo("1. Click Browse to choose image. 2. Apply desired filters. 3. Apply desired edge detection. 4. Save image if desired.")
 
 # opens up a window, config title bar and size
 root = Tk()
@@ -202,7 +220,7 @@ edgeButtons = Frame(root, bd=1, relief=SUNKEN)
 edgeButtons.pack(side=TOP, fill=X)
 #Add buttons to toolbar
 canny = Button(edgeButtons, text="Canny Edges", command=lambda: edgeCanny(image)).pack(side=LEFT, padx=2, pady=2)
-sobel = Button(edgeButtons, text="Sobel Filter", command=lambda: edgeSobel(image)).pack(side=LEFT, padx=2, pady=2)
+sobel = Button(edgeButtons, text="Sobel Filter", command=lambda: edgeSobelX(image)).pack(side=LEFT, padx=2, pady=2)
 
 # add a main frame
 mainFrame = Frame(root, width=700, height=700)
