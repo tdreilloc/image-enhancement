@@ -58,7 +58,7 @@ def browseImage():
     path = filedialog.askopenfilename()
     # read the image to edit
     imageEdit = cv2.imread(path)
-    imageShift = imageEdit
+    imageShift = cv2.cvtColor(imageEdit, cv2.COLOR_BGR2RGB)
     # current image = image read
     image = imageEdit
 
@@ -80,6 +80,44 @@ def browseImage():
     # current image = original image
     image = orig
     originalImage()
+
+#Calculate Euclidian distance
+#def distance(x, xi):
+#    #print("X: ", x, "\n")
+#    return np.sqrt(np.sum((x - xi)**2))
+
+#Marks all pixels as neighbors that are within the kernel size
+def neighbourPixels(img, i, size, grayScale):
+    subimage = img[i-(size-1):i+(size), i-(size):i+(size-1)]
+    list = np.reshape(subimage, (len(subimage)**2), 1)
+    return list
+
+def grayBandwidth(img, list, x):
+    #print(list)
+    #print(img[x,x])
+    index = []
+    for neighbour in range(len(list)):
+        if list[neighbour] < (img[x, x]-3) or list[neighbour] > (img[x,x]+3):
+            index.append(neighbour)
+    eligible = np.delete(list, index)
+    return eligible
+
+#def gaussianKernel(distance, bandwidth):
+#    d = (1/(bandwidth*math.sqrt(2*math.pi))) * np.exp(-0.5*((distance / bandwidth))**2)
+#    return d
+
+def shift(img, iterations, size, grayBand):
+    global image
+    i=50
+    print(img[i,i][grayBand])
+    neighbours = neighbourPixels(image, i, size, grayBand)
+    #print(neighbours)
+    eligibleNeighbours = grayBandwidth(image, neighbours, i)
+    new_mean = np.average(eligibleNeighbours)
+    img[i,i][grayBand] = new_mean
+    print(img[i,i][grayBand])
+
+
 
 # function that saves image to current directory
 def saveImage(img):
@@ -357,75 +395,6 @@ def gamma(img):
     image = gamma
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-#Calculate Euclidian distance
-def distance(x, xi):
-    return np.sqrt(np.sum((x - xi)**2))
-
-#Marks all pixels as neighbors that are within the kernel size
-def neighbourPixels(X, x_mean, bandwidth):
-    #Make list of all points that are within the window
-    window = []
-    for x in X:
-        #calculate distance between points
-        euclidian = distance(x, x_mean)
-        #if within the window, add to the list
-        if euclidian <= bandwidth:
-            window.append(x)
-    #return the list of appropriate points
-    return window
-
-def gaussianKernel(distance, bandwidth):
-    d = (1/(bandwidth*math.sqrt(2*math.pi))) * np.exp(-0.5*((distance / bandwidth))**2)
-    print(d)
-    return d
-
-
-
-def shift(img, iterations, kernelBandwidth, lookDistance):
-    global imageShift
-    global image
-    #Read image as array
-    #copy array
-    #originalArray = np.copy(imgArray)
-    #keep track of past means
-    pastX = []
-
-    #find all neighbour pixels
-    for iteration in range(iterations):
-        for i, x in enumerate(imageShift):
-            neighbours = neighbourPixels(imageShift, x, lookDistance)
-
-            numerator = 0
-            denominator = 0
-            #Perform for all found neighbours
-            for neighbour in neighbours:
-                #calculate euclician distance
-                euclidian = distance(neighbour, x)
-                print("Euclidian: ", euclidian)
-                #calculate the weight of the pixel
-                weight = gaussianKernel(euclidian, kernelBandwidth)
-                print("Weight: ", weight)
-                #calculate weighted average
-                numerator += (weight*neighbour)
-                denominator += weight
-            #Find new X value
-
-            newX = numerator / denominator
-            #Update X to be the new X value found
-            print("OLD: ",imageShift[i])
-            imageShift[i] = newX
-            print("NEW X: ", newX)
-            print("NEW: ",imageShift[i])
-
-
-        pastX.append(np.copy(imageShift))
-
-    shiftPIL = PIL.Image.fromarray(imageShift)
-    shiftTK = ImageTk.PhotoImage(shiftPIL)
-    showNewImage(shiftTK)
-    image = imageShift
-
-
 # function that displays all objects
 def objects(img):
     global image
@@ -615,7 +584,7 @@ Button(obj.sub_frame, text="Labeled Objects", command=lambda: objects(image)).pa
 # add a Mean Shift toggle frame to side bar
 MeanShift = ToggledFrame(fileButtons, text='Color Segmentation', relief="raised")
 MeanShift.pack(side=TOP, fill=X)
-Button(MeanShift.sub_frame, text="Mean Shift", command=lambda: shift(image, 5, 4, 6)).pack(side=TOP, padx=2, pady=2, fill=X)
+Button(MeanShift.sub_frame, text="Mean Shift", command=lambda: shift(imageShift, iterations=5, size=3, grayBand=2)).pack(side=TOP, padx=2, pady=2, fill=X)
 Label(MeanShift.sub_frame, text="X Threshold: ", font='Helvetica 12').pack(side=TOP, padx=2)
 threshX = Scale(MeanShift.sub_frame, from_=0, to=255, tickinterval=255, font="Helvetica 10", orient=HORIZONTAL)
 threshX.pack(side=TOP, padx=2, pady=2)
